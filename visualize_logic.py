@@ -137,7 +137,7 @@ gtrans = Gtransfering()
 gtrans.draw(win)
 random.seed()
 for _ in range(999):
-    Memory.fifoStep(random.randrange(0,5,1))
+    Memory.fifoStep(random.randrange(0,9,1))
     gtrans.doTransfer()
 win.close()
 
