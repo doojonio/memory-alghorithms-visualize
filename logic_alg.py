@@ -5,13 +5,24 @@ class Page:
     id = 0
     fifo = 0
 
+class Transfer:
+    vr_t_ph = Page(0)
+    ph_t_vr = Page(0)
+    def update(self, vr_t_ph, ph_t_vr):
+        self.vr_t_ph = vr_t_ph
+        self.ph_t_vr = ph_t_vr
+    def __init__(self, vr_t_ph, ph_t_vr):
+        self.update(vr_t_ph, ph_t_vr)
+
+
 #Память
 class Memory:
-    vr = list()
-    ph = list()
-    MAX_PAGE = 10
-    MAX_FIFO = 9999
-    MAX_PH_SIZE = 5
+    vr = []
+    ph = []
+    MAX_PAGE = 20
+    MAX_FIFO = MAX_PAGE
+    MAX_PH_SIZE = 10
+    last_ch = Transfer(Page(0), Page(0))
 
     #Напечатать состояние памяти
     @classmethod
@@ -40,10 +51,12 @@ class Memory:
         old_page_index = cls.ph.index(old_page)
         cls.vr.append(cls.ph.pop(old_page_index))
         appending_page = cls.vr.pop(vr_page_index)
+        cls.last_ch.update(appending_page, old_page) #определяем какие страницы меняются
         appending_page.fifo = new_page.fifo + 1
         cls.ph.append(appending_page)
         for page in cls.ph:
             page.fifo = page.fifo - 1
+        
 
     #Инициализировать память упорядоченными страничками
     @classmethod
@@ -56,8 +69,8 @@ class Memory:
             cls.ph.append(app_page)
         for i in range(cls.MAX_PAGE - cls.MAX_PH_SIZE):
             cls.vr.append(Page(i + cls.MAX_PH_SIZE))
-
-
+        
+            
 
 
 
