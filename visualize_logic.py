@@ -1,23 +1,31 @@
+
 from graphics import *
 from logic_alg import *
 import time
 import random
 
+#### PROGRAMM SETTINGS ###################################################
 WINDOW_NAME = "Window"
 WINDOW_LENGHT = 800
 WINDOW_WIDTH = 800
 PAGE_LENGHT = 50
 PAGE_WIDTH = 50
-PH_COORD = Point(50,50)
-VR_COORD = Point(300, 50)
+PH_COORD = Point(100,100)
+VR_COORD = Point(400, 100)
 PH_LABEL = Text(Point(PH_COORD.x + 50, PH_COORD.y - 20), "PHYSIC MEMORY")
 VR_LABEL = Text(Point(VR_COORD.x + 50, PH_COORD.y - 20), "VIRTUAL MEMORY")
-
 win = GraphWin(WINDOW_NAME, WINDOW_LENGHT, WINDOW_WIDTH)
 PH_LABEL.draw(win)
 VR_LABEL.draw(win)
 TIME_SLEEP = .002
 MOVE_STEP = 1.0
+### ADDITIONAL LABEL CODES ###
+FIFO = 1             ### FIFO ALGORITHM
+BYTE = 2             ###
+SC_CH = 3            ### SECOND CHANCE ALG
+LOL2 = 4             ###
+LOL3 = 5             ###
+##########################################################################
 
 class Gpage:
     page = Page(0)
@@ -26,20 +34,35 @@ class Gpage:
     y = .0
     rect = Rectangle(coord, Point(coord.x + PAGE_LENGHT, coord.y + PAGE_WIDTH))
     label = Text(Point(coord.x + PAGE_LENGHT/2, coord.y + PAGE_WIDTH/2), page.id)
+    al_p = Point(coord.x - PAGE_LENGHT, coord.y + PAGE_WIDTH/2)
+    a_label = Text(al_p, '')    
     def __init__(self, page, coord = Point(0,0)):
         self.page = page
         self.coord = coord
         self.rect = Rectangle(coord, Point(coord.x + PAGE_LENGHT, coord.y + PAGE_WIDTH))
-        self.label = Text(Point(coord.x + PAGE_LENGHT/2, coord.y + PAGE_WIDTH/2), self.page.id)        
+        self.label = Text(Point(coord.x + PAGE_LENGHT/2, coord.y + PAGE_WIDTH/2), self.page.id)
+        self.al_p = Point(self.coord.x - PAGE_LENGHT, self.coord.y + PAGE_WIDTH/2)
+        self.a_label = Text(self.al_p, '0')
     def draw(self, window):
         self.label.draw(window)
         self.rect.draw(window)
     def move(self, x, y):
         self.rect.move(x, y)
         self.label.move(x, y)
+        self.a_label.move(x, y)
         self.coord = Point(self.coord.x + x, self.coord.y + y)
+    def switch_alabel(self, alabel_code):
+        if alabel_code == FIFO:
+            self.a_label.setText(self.page.fifo)
+        if alabel_code == BYTE:
+            self.a_label.setText('')
+        if alabel_code == SC_CH:
+            self.a_label.setText("R:{} F:{}".format(self.page.rbit, self.page.fifo))
+    def draw_alabel(self, window):
+        self.a_label.draw(window)
+    def undraw_alabel(self):
+        self.a_label.undraw()   
         
-
 class Gmemory:
     gpages = list()
     coord = Point(0,0)
@@ -75,24 +98,59 @@ class Gmemory:
     def move_since(self, x, y, start):
         for gpage in self.gpages[start::1]:
             gpage.move(x, y)
-
+    def update_alabels(self, alabel_code):
+        for gpage in self.gpages:
+            gpage.switch_alabel(alabel_code)
+    def draw_alabels(self, window):
+        for gpage in self.gpages:
+            gpage.a_label.draw(window)
+            
 class Gtransfering:
     gph = Gmemory(PH_COORD, Memory.ph)
     gvr = Gmemory(VR_COORD, Memory.vr)
-    def __init__(self):
+    alabel_code = FIFO
+    def __init__(self, alabel_code):
+        self.alabel_code = alabel_code
         self.updateGmemory()
     def draw(self, window):
         self.gph.draw(window)
+        self.gph.draw_alabels(window)
         self.gvr.draw(window)
     def updateGmemory(self):
         self.gph = Gmemory(PH_COORD, Memory.ph)
+        self.gph.update_alabels(self.alabel_code)
         self.gvr = Gmemory(VR_COORD, Memory.vr)
     def doTransfer(self):
+        self.gph.update_alabels(self.alabel_code)
+        if Memory.last_ch.ph_t_eph.id != Page(BREAK_VALUE).id:
+            self.gph.choose_moving_p(Memory.last_ch.ph_t_eph.id)
+            moving_ph_gpage = self.gph.gpages[self.gph.moving_p_index]
+            ### TRANFERING PH TO THE END OF THE PH ### 
+            moving_ph_gpage.undraw_alabel()
+            while moving_ph_gpage.coord.x < PH_COORD.x + PAGE_LENGHT:
+                self.gph.move_page(MOVE_STEP, 0)
+                time.sleep(TIME_SLEEP)
+            while moving_ph_gpage.coord.y < PH_COORD.y + self.gph.size * PAGE_WIDTH:
+                self.gph.move_page(0, MOVE_STEP)
+                time.sleep(TIME_SLEEP)
+            while moving_ph_gpage.coord.x > PH_COORD.x:
+                self.gph.move_page(-MOVE_STEP, 0)
+                time.sleep(TIME_SLEEP)
+            temp_gpage = self.gph.pop(self.gph.moving_p_index)
+            self.gph.append_gp(temp_gpage)
+            self.gph.update_alabels(self.alabel_code)
+            moving_ph_gpage.draw_alabel(win)
+            ### ALL PAGES TO THE UP ###
+            while self.gph.gpages[0].coord.y > PH_COORD.y:
+                self.gph.move(0, -MOVE_STEP)
+                time.sleep(TIME_SLEEP)
+            return
         self.gph.choose_moving_p(Memory.last_ch.ph_t_vr.id)
         self.gvr.choose_moving_p(Memory.last_ch.vr_t_ph.id)
         moving_ph_gpage = self.gph.gpages[self.gph.moving_p_index]
         moving_vr_gpage = self.gvr.gpages[self.gvr.moving_p_index]
         ### TRANSFERING PH TO VR ###
+        moving_ph_gpage.undraw_alabel()
         while moving_ph_gpage.coord.x < VR_COORD.x - PAGE_LENGHT:
             self.gph.move_page(MOVE_STEP,0)
             time.sleep(TIME_SLEEP)
@@ -113,6 +171,9 @@ class Gtransfering:
             self.gvr.move_page(-MOVE_STEP, 0)
             time.sleep(TIME_SLEEP)
         ### ###
+        
+        moving_vr_gpage.switch_alabel(self.alabel_code)
+        moving_vr_gpage.draw_alabel(win)
         self.gph.append_gp(self.gvr.pop(self.gvr.moving_p_index))
         self.gvr.append_gp(self.gph.pop(self.gph.moving_p_index))
         if self.gph.moving_p_index != 0:
@@ -131,13 +192,14 @@ class Gtransfering:
         while self.gvr.gpages[0].coord.y > VR_COORD.y:
             self.gvr.move(0, -MOVE_STEP)
             time.sleep(TIME_SLEEP)
-            
+        self.gph.update_alabels(self.alabel_code)
 Memory.initMemory()
-gtrans = Gtransfering()
+gtrans = Gtransfering(SC_CH)
 gtrans.draw(win)
 random.seed()
-for _ in range(999):
-    Memory.fifoStep(random.randrange(0,9,1))
+Memory.initRbits()
+for i in range(999):
+    Memory.secondChanceStep(random.randrange(0,9,1))
     gtrans.doTransfer()
 win.close()
 
