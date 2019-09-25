@@ -21,7 +21,7 @@ TIME_SLEEP = .002
 MOVE_STEP = 1.0
 ### ADDITIONAL LABEL CODES ###
 FIFO = 1             ### FIFO ALGORITHM
-BYTE = 2             ###
+BIT = 2             ###
 SC_CH = 3            ### SECOND CHANCE ALG
 LOL2 = 4             ###
 LOL3 = 5             ###
@@ -54,10 +54,11 @@ class Gpage:
     def switch_alabel(self, alabel_code):
         if alabel_code == FIFO:
             self.a_label.setText(self.page.fifo)
-        if alabel_code == BYTE:
-            self.a_label.setText('')
+        if alabel_code == BIT:
+            self.a_label.setText("T:{} U:{}".format(self.page.el_time_s_us, self.page.ubit))
         if alabel_code == SC_CH:
             self.a_label.setText("R:{} F:{}".format(self.page.rbit, self.page.fifo))
+        
     def draw_alabel(self, window):
         self.a_label.draw(window)
     def undraw_alabel(self):
@@ -178,9 +179,8 @@ class Gtransfering:
         self.gvr.append_gp(self.gph.pop(self.gph.moving_p_index))
         if self.gph.moving_p_index != 0:
             while self.gph.gpages[self.gph.moving_p_index].coord.y > self.gph.gpages[self.gph.moving_p_index - 1].coord.y + PAGE_WIDTH:
-                for gpage in self.gph.gpages[self.gph.moving_p_index::1]:
-                    gpage.move(0,-MOVE_STEP)
-                    time.sleep(TIME_SLEEP)
+                self.gph.move_since(0, -MOVE_STEP, self.gph.moving_p_index)
+                time.sleep(TIME_SLEEP)
         if self.gvr.moving_p_index != 0:
             while self.gvr.gpages[self.gvr.moving_p_index].coord.y > self.gvr.gpages[self.gvr.moving_p_index - 1].coord.y + PAGE_WIDTH:
                     self.gvr.move_since(0, -MOVE_STEP, self.gvr.moving_p_index)
@@ -194,12 +194,12 @@ class Gtransfering:
             time.sleep(TIME_SLEEP)
         self.gph.update_alabels(self.alabel_code)
 Memory.initMemory()
-gtrans = Gtransfering(SC_CH)
+gtrans = Gtransfering(BIT)
 gtrans.draw(win)
 random.seed()
-Memory.initRbits()
+Memory.initRandomValues()
 for i in range(999):
-    Memory.secondChanceStep(random.randrange(0,9,1))
+    Memory.bitR(random.randrange(0,9,1))
     gtrans.doTransfer()
 win.close()
 

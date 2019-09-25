@@ -1,4 +1,4 @@
-
+import time
 import random
 
 BREAK_VALUE = 999
@@ -10,9 +10,11 @@ class Page:
     id = 0
     fifo = 0
     rbit = 0
+    ubit = 0
+    n_calls = 0
+    el_time_s_us = random.randrange(0, 666, 1)
     def __init__(self, id):
         self.id = id
-        rbit = 1
 
 class Transfer:
     vr_t_ph = Page(BREAK_VALUE)
@@ -104,17 +106,30 @@ class Memory:
             cls.vr.append(cls.ph.pop(old_page_index))
             appending_page = cls.vr.pop(vr_page_index)
             cls.last_ch = Transfer(appending_page, old_page, Page(BREAK_VALUE)) #определяем какие страницы меняются
-            Memory.initRbits()
+            cls.initRandomValues()
         appending_page.fifo = new_page.fifo + 1
         cls.ph.append(appending_page)
         for page in cls.ph:
             page.fifo = page.fifo - 1
     @classmethod
-    def initRbits(cls):
+    def initRandomValues(cls):
         for page in cls.ph[1::]:
             page.rbit = random.randrange(0,2,1)
-    
-
+            page.el_time_s_us = random.randrange(0, 666, 1)
+            page.ubit = random.randrange(0, 2, 1)
+            page.n_calls = random.randrange(0, 5349, 1)
+    @classmethod
+    def bitR(cls, vr_page_index):
+        exit_page = cls.ph[0]
+        for page in cls.ph:
+            if (exit_page.el_time_s_us < page.el_time_s_us) and (page.ubit == 0):
+                exit_page = page
+        exit_page_index = cls.ph.index(exit_page)
+        cls.vr.append(cls.ph.pop(exit_page_index))
+        appending_page = cls.vr.pop(vr_page_index)
+        cls.last_ch = Transfer(appending_page, exit_page, Page(BREAK_VALUE))
+        cls.ph.append(appending_page)
+        cls.initRandomValues()
 
 
 
