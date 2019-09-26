@@ -1,4 +1,3 @@
-
 from graphics import *
 from logic_alg import *
 import time
@@ -21,10 +20,10 @@ TIME_SLEEP = .002
 MOVE_STEP = 1.0
 ### ADDITIONAL LABEL CODES ###
 FIFO = 1             ### FIFO ALGORITHM
-BIT = 2             ###
+BIT = 2              ### BIT REFERENCES
 SC_CH = 3            ### SECOND CHANCE ALG
-LOL2 = 4             ###
-LOL3 = 5             ###
+AFU = 4             ### LEAST FREQUANCY U
+LRU = 5             ### LEAST R U
 ##########################################################################
 
 class Gpage:
@@ -58,6 +57,8 @@ class Gpage:
             self.a_label.setText("T:{} U:{}".format(self.page.el_time_s_us, self.page.ubit))
         if alabel_code == SC_CH:
             self.a_label.setText("R:{} F:{}".format(self.page.rbit, self.page.fifo))
+        if alabel_code == AFU:
+            self.a_label.setText("CALLS:{}".format(self.page.n_calls))
         
     def draw_alabel(self, window):
         self.a_label.draw(window)
@@ -193,15 +194,17 @@ class Gtransfering:
             self.gvr.move(0, -MOVE_STEP)
             time.sleep(TIME_SLEEP)
         self.gph.update_alabels(self.alabel_code)
-Memory.initMemory()
-gtrans = Gtransfering(BIT)
-gtrans.draw(win)
-random.seed()
-Memory.initRandomValues()
-for i in range(999):
-    Memory.bitR(random.randrange(0,9,1))
-    gtrans.doTransfer()
-win.close()
 
+def main():
+    Memory.initMemory()
+    gtrans = Gtransfering(AFU)
+    gtrans.draw(win)
+    random.seed()
+    Memory.initRandomValues()
+    for i in range(999):
+        Memory.mfu(random.randrange(0,9,1))
+        gtrans.doTransfer()
+    win.close()
+main()
         
 

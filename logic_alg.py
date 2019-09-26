@@ -9,9 +9,9 @@ random.seed()
 class Page:
     id = 0
     fifo = 0
-    rbit = 0
-    ubit = 0
-    n_calls = 0
+    rbit = random.randrange(0,2,1)
+    ubit = random.randrange(0,2,1)
+    n_calls = random.randrange(0, 666, 1)
     el_time_s_us = random.randrange(0, 666, 1)
     def __init__(self, id):
         self.id = id
@@ -24,7 +24,6 @@ class Transfer:
         self.vr_t_ph = vr_t_ph
         self.ph_t_vr = ph_t_vr
         self.ph_t_eph = ph_t_eph
-        print(self.vr_t_ph.id, ' ', self.ph_t_vr.id, ' ', self.ph_t_eph.id, ' ', self.ph_t_eph.rbit)
     def __init__(self, vr_t_ph, ph_t_vr, ph_t_eph = Page(BREAK_VALUE)):
         self.update(vr_t_ph, ph_t_vr, ph_t_eph)
         
@@ -65,7 +64,7 @@ class Memory:
         old_page_index = cls.ph.index(old_page)
         cls.vr.append(cls.ph.pop(old_page_index))
         appending_page = cls.vr.pop(vr_page_index)
-        cls.last_ch.update(appending_page, old_page) #определяем какие страницы меняются
+        cls.last_ch = Transfer(appending_page, old_page) #определяем какие страницы меняются
         appending_page.fifo = new_page.fifo + 1
         cls.ph.append(appending_page)
         for page in cls.ph:
@@ -117,7 +116,7 @@ class Memory:
             page.rbit = random.randrange(0,2,1)
             page.el_time_s_us = random.randrange(0, 666, 1)
             page.ubit = random.randrange(0, 2, 1)
-            page.n_calls = random.randrange(0, 5349, 1)
+            page.n_calls = random.randrange(0, 666, 1)
     @classmethod
     def bitR(cls, vr_page_index):
         exit_page = cls.ph[0]
@@ -125,13 +124,44 @@ class Memory:
             if (exit_page.el_time_s_us < page.el_time_s_us) and (page.ubit == 0):
                 exit_page = page
         exit_page_index = cls.ph.index(exit_page)
-        cls.vr.append(cls.ph.pop(exit_page_index))
-        appending_page = cls.vr.pop(vr_page_index)
-        cls.last_ch = Transfer(appending_page, exit_page, Page(BREAK_VALUE))
-        cls.ph.append(appending_page)
+        cls.approve_tranfer(vr_page_index, exit_page_index)
         cls.initRandomValues()
+    @classmethod
+    def lfu(cls, vr_page_index):
+        exit_page = cls.ph[0]
+        for page in cls.ph:
+            if exit_page.n_calls > page.n_calls:
+                exit_page = page
+        exit_page_index = cls.ph.index(exit_page)
+        cls.approve_tranfer(vr_page_index, exit_page_index)
+        cls.initRandomValues()
+    @classmethod
+    def approve_transfer(cls, vr_page_index, ph_page_index):
+        vr_page = cls.vr.pop(vr_page_index)
+        ph_page = cls.ph.pop(ph_page_index)
+        cls.vr.append(ph_page)
+        cls.ph.append(vr_page)
+        cls.last_ch = Transfer(vr_page, ph_page)
+    @classmethod
+    def lru(cls, vr_page_index):
+        exit_page = cls.ph[0]
+        for page in cls.ph:
+            if exit_page.el_time_s_us < page.el_time_s_us:
+                exit_page = page
+        cls.approve_transfer(vr_page_index, cls.ph.index(exit_page))
+        cls.initRandomValues()
+    @classmethod
+    def mfu(cls, vr_page_index):
+        exit_page = cls.ph[0]
+        for page in cls.ph:
+            if exit_page.n_calls < page.n_calls:
+                exit_page = page
+        exit_page_index = cls.ph.index(exit_page)
+        cls.approve_transfer(vr_page_index, exit_page_index)
+        cls.initRandomValues()
+        
 
-
+    
 
 
 
