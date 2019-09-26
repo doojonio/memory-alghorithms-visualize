@@ -106,7 +106,9 @@ class Gmemory:
     def draw_alabels(self, window):
         for gpage in self.gpages:
             gpage.a_label.draw(window)
-            
+    def getCoord(self):
+        return self.gpages[0].coord
+        
 class Gtransfering:
     gph = Gmemory(PH_COORD, Memory.ph)
     gvr = Gmemory(VR_COORD, Memory.vr)
@@ -129,23 +131,15 @@ class Gtransfering:
             moving_ph_gpage = self.gph.gpages[self.gph.moving_p_index]
             ### TRANFERING PH TO THE END OF THE PH ### 
             moving_ph_gpage.undraw_alabel()
-            while moving_ph_gpage.coord.x < PH_COORD.x + PAGE_LENGHT:
-                self.gph.move_page(MOVE_STEP, 0)
-                time.sleep(TIME_SLEEP)
-            while moving_ph_gpage.coord.y < PH_COORD.y + self.gph.size * PAGE_WIDTH:
-                self.gph.move_page(0, MOVE_STEP)
-                time.sleep(TIME_SLEEP)
-            while moving_ph_gpage.coord.x > PH_COORD.x:
-                self.gph.move_page(-MOVE_STEP, 0)
-                time.sleep(TIME_SLEEP)
+            Mover.xMove(moving_ph_gpage, PH_COORD.x + PAGE_LENGHT)
+            Mover.yMove(moving_ph_gpage, PH_COORD.y + self.gph.size * PAGE_WIDTH)
+            Mover.xMove(moving_ph_gpage, PH_COORD.x)
             temp_gpage = self.gph.pop(self.gph.moving_p_index)
             self.gph.append_gp(temp_gpage)
             self.gph.update_alabels(self.alabel_code)
             moving_ph_gpage.draw_alabel(win)
             ### ALL PAGES TO THE UP ###
-            while self.gph.gpages[0].coord.y > PH_COORD.y:
-                self.gph.move(0, -MOVE_STEP)
-                time.sleep(TIME_SLEEP)
+            Mover.yMoveSlice(self.gph, 0, PH_COORD.y)
             return
         self.gph.choose_moving_p(Memory.last_ch.ph_t_vr.id)
         self.gvr.choose_moving_p(Memory.last_ch.vr_t_ph.id)
@@ -153,56 +147,73 @@ class Gtransfering:
         moving_vr_gpage = self.gvr.gpages[self.gvr.moving_p_index]
         ### TRANSFERING PH TO VR ###
         moving_ph_gpage.undraw_alabel()
-        while moving_ph_gpage.coord.x < VR_COORD.x - PAGE_LENGHT:
-            self.gph.move_page(MOVE_STEP,0)
-            time.sleep(TIME_SLEEP)
-        while moving_ph_gpage.coord.y < VR_COORD.y + PAGE_WIDTH * self.gvr.size:
-            self.gph.move_page(0, MOVE_STEP)
-            time.sleep(TIME_SLEEP)
-        while moving_ph_gpage.coord.x < VR_COORD.x:
-            self.gph.move_page(MOVE_STEP,0)
-            time.sleep(TIME_SLEEP)
+        Mover.xMove(moving_ph_gpage, VR_COORD.x - PAGE_LENGHT)
+        Mover.yMove(moving_ph_gpage, VR_COORD.y + PAGE_WIDTH * self.gvr.size)
+        Mover.xMove(moving_ph_gpage, VR_COORD.x)   
         ### TRANSFERING VR TO PH ###
-        while moving_vr_gpage.coord.x > PH_COORD.x + PAGE_LENGHT:
-            self.gvr.move_page(-MOVE_STEP,0)
-            time.sleep(TIME_SLEEP)
-        while moving_vr_gpage.coord.y < PH_COORD.y + PAGE_WIDTH * self.gph.size:
-            self.gvr.move_page(0, MOVE_STEP)
-            time.sleep(TIME_SLEEP)
-        while moving_vr_gpage.coord.x > PH_COORD.x:
-            self.gvr.move_page(-MOVE_STEP, 0)
-            time.sleep(TIME_SLEEP)
+        Mover.xMove(moving_vr_gpage, PH_COORD.x + PAGE_LENGHT)
+        Mover.yMove(moving_vr_gpage, PH_COORD.y + PAGE_WIDTH * self.gph.size)
+        Mover.xMove(moving_vr_gpage, PH_COORD.x)
         ### ###
-        
         moving_vr_gpage.switch_alabel(self.alabel_code)
         moving_vr_gpage.draw_alabel(win)
         self.gph.append_gp(self.gvr.pop(self.gvr.moving_p_index))
         self.gvr.append_gp(self.gph.pop(self.gph.moving_p_index))
         if self.gph.moving_p_index != 0:
-            while self.gph.gpages[self.gph.moving_p_index].coord.y > self.gph.gpages[self.gph.moving_p_index - 1].coord.y + PAGE_WIDTH:
-                self.gph.move_since(0, -MOVE_STEP, self.gph.moving_p_index)
-                time.sleep(TIME_SLEEP)
+            Mover.yMoveSlice(self.gph, self.gph.moving_p_index, self.gph.gpages[self.gph.moving_p_index - 1].coord.y + PAGE_WIDTH)       
         if self.gvr.moving_p_index != 0:
-            while self.gvr.gpages[self.gvr.moving_p_index].coord.y > self.gvr.gpages[self.gvr.moving_p_index - 1].coord.y + PAGE_WIDTH:
-                    self.gvr.move_since(0, -MOVE_STEP, self.gvr.moving_p_index)
-                    time.sleep(TIME_SLEEP)
+            Mover.yMoveSlice(self.gvr, self.gvr.moving_p_index, self.gvr.gpages[self.gvr.moving_p_index - 1].coord.y + PAGE_WIDTH)        
         ### STEP UP FOR ALL!!! ###
-        while self.gph.gpages[0].coord.y > PH_COORD.y:
-            self.gph.move(0, -MOVE_STEP)
-            time.sleep(TIME_SLEEP)
-        while self.gvr.gpages[0].coord.y > VR_COORD.y:
-            self.gvr.move(0, -MOVE_STEP)
-            time.sleep(TIME_SLEEP)
+        Mover.yMoveSlice(self.gph, 0, PH_COORD.y)
+        Mover.yMoveSlice(self.gvr, 0, VR_COORD.y)
         self.gph.update_alabels(self.alabel_code)
 
+class Mover:
+    @staticmethod
+    def xMove(gpage, xVal):
+        if(gpage.coord.x < xVal):
+            while gpage.coord.x < xVal:
+                gpage.move(MOVE_STEP, 0)
+                time.sleep(TIME_SLEEP)
+        else:
+            while gpage.coord.x > xVal:
+                gpage.move(-MOVE_STEP, 0)
+                time.sleep(TIME_SLEEP)
+    def yMove(gpage, yVal):
+        if(gpage.coord.y < yVal):
+            while gpage.coord.y < yVal:
+                gpage.move(0, MOVE_STEP)
+                time.sleep(TIME_SLEEP)
+        else:
+            while gpage.coord.y > yVal:
+                gpage.move(0, -MOVE_STEP)
+                time.slepp(TIME_SLEEP)
+    def xMoveSlice(gmemory, since_index, xVal):
+        if gmemory.gpages[since_index].coord.x < xVal:
+            while gmemory.gpages[since_index].coord.x < xVal:
+                gmemory.move_since(MOVE_STEP, 0, since_index)
+                time.sleep(TIME_SLEEP)
+        else:
+            while gmemory.gpages[since_index].coord.x > xVal:
+                gmemory.move_since(-MOVE_STEP, 0, since_index)
+                time.sleep(TIME_SLEEP)
+    def yMoveSlice(gmemory, since_index, yVal):
+        if gmemory.gpages[since_index].coord.y < yVal:
+            while gmemory.gpages[since_index].coord.y < yVal:
+                gmemory.move_since(0, MOVE_STEP, since_index)
+                time.sleep(TIME_SLEEP)
+        else:
+            while gmemory.gpages[since_index].coord.y > yVal:
+                gmemory.move_since(0, -MOVE_STEP, since_index)
+                time.sleep(TIME_SLEEP)
 def main():
     Memory.initMemory()
-    gtrans = Gtransfering(AFU)
+    gtrans = Gtransfering(SC_CH)
     gtrans.draw(win)
     random.seed()
     Memory.initRandomValues()
     for i in range(999):
-        Memory.mfu(random.randrange(0,9,1))
+        Memory.secondChanceStep(random.randrange(0,9,1))
         gtrans.doTransfer()
     win.close()
 main()
