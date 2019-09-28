@@ -13,9 +13,6 @@ PH_COORD = Point(100,100)
 VR_COORD = Point(400, 100)
 PH_LABEL = Text(Point(PH_COORD.x + 50, PH_COORD.y - 20), "PHYSIC MEMORY")
 VR_LABEL = Text(Point(VR_COORD.x + 50, PH_COORD.y - 20), "VIRTUAL MEMORY")
-win = GraphWin(WINDOW_NAME, WINDOW_LENGHT, WINDOW_WIDTH)
-PH_LABEL.draw(win)
-VR_LABEL.draw(win)
 TIME_SLEEP = .002
 MOVE_STEP = 1.0
 ### ADDITIONAL LABEL CODES ###
@@ -59,6 +56,8 @@ class Gpage:
             self.a_label.setText("R:{} F:{}".format(self.page.rbit, self.page.fifo))
         if alabel_code == AFU:
             self.a_label.setText("CALLS:{}".format(self.page.n_calls))
+        if alabel_code == LRU:
+            self.a_label.setText("EL.T.:{}".format(self.page.el_time_s_us))
         
     def draw_alabel(self, window):
         self.a_label.draw(window)
@@ -113,13 +112,15 @@ class Gtransfering:
     gph = Gmemory(PH_COORD, Memory.ph)
     gvr = Gmemory(VR_COORD, Memory.vr)
     alabel_code = FIFO
-    def __init__(self, alabel_code):
+    window = None
+    def __init__(self, alabel_code, window):
         self.alabel_code = alabel_code
         self.updateGmemory()
-    def draw(self, window):
-        self.gph.draw(window)
-        self.gph.draw_alabels(window)
-        self.gvr.draw(window)
+        self.window = window
+    def draw(self):
+        self.gph.draw(self.window)
+        self.gph.draw_alabels(self.window)
+        self.gvr.draw(self.window)
     def updateGmemory(self):
         self.gph = Gmemory(PH_COORD, Memory.ph)
         self.gph.update_alabels(self.alabel_code)
@@ -137,7 +138,7 @@ class Gtransfering:
             temp_gpage = self.gph.pop(self.gph.moving_p_index)
             self.gph.append_gp(temp_gpage)
             self.gph.update_alabels(self.alabel_code)
-            moving_ph_gpage.draw_alabel(win)
+            moving_ph_gpage.draw_alabel(self.window)
             ### ALL PAGES TO THE UP ###
             Mover.yMoveSlice(self.gph, 0, PH_COORD.y)
             return
@@ -156,7 +157,7 @@ class Gtransfering:
         Mover.xMove(moving_vr_gpage, PH_COORD.x)
         ### ###
         moving_vr_gpage.switch_alabel(self.alabel_code)
-        moving_vr_gpage.draw_alabel(win)
+        moving_vr_gpage.draw_alabel(self.window)
         self.gph.append_gp(self.gvr.pop(self.gvr.moving_p_index))
         self.gvr.append_gp(self.gph.pop(self.gph.moving_p_index))
         if self.gph.moving_p_index != 0:
@@ -206,16 +207,6 @@ class Mover:
             while gmemory.gpages[since_index].coord.y > yVal:
                 gmemory.move_since(0, -MOVE_STEP, since_index)
                 time.sleep(TIME_SLEEP)
-def main():
-    Memory.initMemory()
-    gtrans = Gtransfering(SC_CH)
-    gtrans.draw(win)
-    random.seed()
-    Memory.initRandomValues()
-    for i in range(999):
-        Memory.secondChanceStep(random.randrange(0,9,1))
-        gtrans.doTransfer()
-    win.close()
-main()
+
         
 

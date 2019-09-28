@@ -35,6 +35,7 @@ class Memory:
     MAX_PAGE = 20
     MAX_FIFO = MAX_PAGE
     MAX_PH_SIZE = 10
+    MAX_VR_SIZE = MAX_PAGE - MAX_PH_SIZE
     last_ch = Transfer(Page(BREAK_VALUE), Page(BREAK_VALUE))
 
     #Напечатать состояние памяти
@@ -124,7 +125,7 @@ class Memory:
             if (exit_page.el_time_s_us < page.el_time_s_us) and (page.ubit == 0):
                 exit_page = page
         exit_page_index = cls.ph.index(exit_page)
-        cls.approve_tranfer(vr_page_index, exit_page_index)
+        cls.approve_transfer(vr_page_index, exit_page_index)
         cls.initRandomValues()
     @classmethod
     def lfu(cls, vr_page_index):
@@ -133,7 +134,7 @@ class Memory:
             if exit_page.n_calls > page.n_calls:
                 exit_page = page
         exit_page_index = cls.ph.index(exit_page)
-        cls.approve_tranfer(vr_page_index, exit_page_index)
+        cls.approve_transfer(vr_page_index, exit_page_index)
         cls.initRandomValues()
     @classmethod
     def approve_transfer(cls, vr_page_index, ph_page_index):
